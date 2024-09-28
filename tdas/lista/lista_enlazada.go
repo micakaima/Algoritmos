@@ -12,7 +12,9 @@ type listaEnlazada[T any] struct {
 }
 
 type iterListaEnlazada[T any] struct {
-	actual *nodoLista[T]
+	anterior *nodoLista[T]
+	actual   *nodoLista[T]
+	lista    *listaEnlazada[T]
 }
 
 func crearNodo[T any]() *nodoLista[T] {
@@ -91,7 +93,7 @@ func (l *listaEnlazada[T]) Iterar(visitar func(T) bool) {
 }
 
 func (l *listaEnlazada[T]) Iterador() IteradorLista[T] {
-	return &iterListaEnlazada[T]{}
+	return &iterListaEnlazada[T]{actual: l.primero, lista: l}
 }
 
 func (i *iterListaEnlazada[T]) VerActual() T {
@@ -103,6 +105,7 @@ func (i *iterListaEnlazada[T]) HaySiguiente() bool {
 }
 
 func (i *iterListaEnlazada[T]) Siguiente() {
+	i.anterior = i.actual
 	i.actual = i.actual.proximo
 }
 
