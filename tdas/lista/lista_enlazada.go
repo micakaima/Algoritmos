@@ -17,13 +17,12 @@ type iterListaEnlazada[T any] struct {
 	lista    *listaEnlazada[T]
 }
 
-func crearNodo[T any]() *nodoLista[T] {
-	return &nodoLista[T]{}
+func crearNodo[T any](dato T) *nodoLista[T] {
+	return &nodoLista[T]{dato, nil}
 }
 
 func CrearListaEnlazada[T any]() Lista[T] {
-	nodo := crearNodo[T]()
-	return &listaEnlazada[T]{nodo, nodo, 0}
+	return &listaEnlazada[T]{nil, nil, 0}
 }
 
 func (l *listaEnlazada[T]) EstaVacia() bool {
@@ -31,48 +30,45 @@ func (l *listaEnlazada[T]) EstaVacia() bool {
 }
 
 func (l *listaEnlazada[T]) InsertarPrimero(elem T) {
+	nuevoNodo := crearNodo(elem)
 	if l.EstaVacia() {
-		l.primero.dato = elem
-		l.largo++
+		l.ultimo = nuevoNodo
+	} else {
+		nuevoNodo.proximo = l.primero
 	}
-	nuevoNodo := crearNodo[T]()
-	nuevoNodo.dato = elem
-	nuevoNodo.proximo = l.primero
 	l.primero = nuevoNodo
 	l.largo++
 }
 
 func (l *listaEnlazada[T]) InsertarUltimo(elem T) {
+	nuevoNodo := crearNodo(elem)
 	if l.EstaVacia() {
-		l.ultimo.dato = elem
-		l.largo++
+		l.primero = nuevoNodo
+	} else {
+		l.ultimo.proximo = nuevoNodo
 	}
-	l.ultimo.proximo = crearNodo[T]()
-	l.ultimo = l.ultimo.proximo
-	l.ultimo.dato = elem
+	l.ultimo = nuevoNodo
 	l.largo++
 }
 
 func (l *listaEnlazada[T]) BorrarPrimero() T {
-	if l.EstaVacia() {
-		panic("La lista esta vacia")
-	}
+	validarListaVacia(l)
 	primero := l.primero.dato
 	l.primero = l.primero.proximo
+	if l.primero == nil {
+		l.ultimo = nil
+	}
+	l.largo--
 	return primero
 }
 
 func (l *listaEnlazada[T]) VerPrimero() T {
-	if l.EstaVacia() {
-		panic("La lista esta vacia")
-	}
+	validarListaVacia(l)
 	return l.primero.dato
 }
 
 func (l *listaEnlazada[T]) VerUltimo() T {
-	if l.EstaVacia() {
-		panic("La lista esta vacia")
-	}
+	validarListaVacia(l)
 	return l.ultimo.dato
 }
 
@@ -97,6 +93,7 @@ func (l *listaEnlazada[T]) Iterador() IteradorLista[T] {
 }
 
 func (i *iterListaEnlazada[T]) VerActual() T {
+	validarIteradorFinalizado(i)
 	return i.actual.dato
 }
 
@@ -105,14 +102,38 @@ func (i *iterListaEnlazada[T]) HaySiguiente() bool {
 }
 
 func (i *iterListaEnlazada[T]) Siguiente() {
+	validarIteradorFinalizado(i)
 	i.anterior = i.actual
 	i.actual = i.actual.proximo
 }
 
-func (i *iterListaEnlazada[T]) Insertar(T) {
-
+func (i *iterListaEnlazada[T]) Insertar(elem T) {
+	nuevoNodo := crearNodo(elem)
+	if i.anterior != nil {
+		i.anterior.proximo = nuevoNodo
+	}
+	nuevoNodo.proximo = i.actual
+	i.actual = nuevoNodo
 }
 
 func (i *iterListaEnlazada[T]) Borrar() T {
+	validarIteradorFinalizado(i)
+	datoEliminado := i.actual.dato
+	if i.anterior != nil {
+		i.anterior.proximo = i.actual.proximo
+	}
+	i.actual = i.actual.proximo
+	return datoEliminado
+}
 
+func validarListaVacia[T any](l *listaEnlazada[T]) {
+	if l.EstaVacia() {
+		panic("La lista esta vacia")
+	}
+}
+
+func validarIteradorFinalizado[T any](i *iterListaEnlazada[T]) {
+	if !i.HaySiguiente() {
+		panic("El iterador termino de iterar")
+	}
 }
