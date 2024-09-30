@@ -114,6 +114,7 @@ func (i *iterListaEnlazada[T]) Insertar(elem T) {
 	}
 	nuevoNodo.proximo = i.actual
 	i.actual = nuevoNodo
+	i.lista.largo++
 }
 
 func (i *iterListaEnlazada[T]) Borrar() T {
@@ -123,6 +124,7 @@ func (i *iterListaEnlazada[T]) Borrar() T {
 		i.anterior.proximo = i.actual.proximo
 	}
 	i.actual = i.actual.proximo
+	i.lista.largo--
 	return datoEliminado
 }
 

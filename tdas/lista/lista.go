@@ -46,7 +46,7 @@ type IteradorLista[T any] interface {
 	// Si ya se han iterado todos los elementos o la lista está vacía, entra en pánico con un mensaje "El iterador termino de iterar".
 	Siguiente()
 
-	// Insertar agrega un elemento en la posición actual en la lista. Luego de la inserción, la iteración sigue desde la posición de insersión misma.
+	// Insertar agrega un elemento en la posición actual en la lista. Luego de la inserción, la iteración sigue desde la posición de inserción misma.
 	Insertar(T)
 
 	// Borrar remueve el elemento de la posición actual de la lista y se devuelve ese valor. Luego de borrarlo, la iteración sigue desde el elemento siguiente.
