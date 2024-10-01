@@ -109,8 +109,16 @@ func (i *iterListaEnlazada[T]) Siguiente() {
 
 func (i *iterListaEnlazada[T]) Insertar(elem T) {
 	nuevoNodo := crearNodo(elem)
-	if i.anterior != nil {
+	if i.anterior == nil {
+		i.lista.primero = nuevoNodo
+		if i.lista.ultimo == nil {
+			i.lista.ultimo = nuevoNodo
+		}
+	} else {
 		i.anterior.proximo = nuevoNodo
+		if i.actual == nil {
+			i.lista.ultimo = nuevoNodo
+		}
 	}
 	nuevoNodo.proximo = i.actual
 	i.actual = nuevoNodo
