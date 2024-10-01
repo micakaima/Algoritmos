@@ -128,8 +128,16 @@ func (i *iterListaEnlazada[T]) Insertar(elem T) {
 func (i *iterListaEnlazada[T]) Borrar() T {
 	validarIteradorFinalizado(i)
 	datoEliminado := i.actual.dato
-	if i.anterior != nil {
+	if i.anterior == nil {
+		i.lista.primero = i.lista.primero.proximo
+		if i.lista.primero == nil {
+			i.lista.ultimo = nil
+		}
+	} else {
 		i.anterior.proximo = i.actual.proximo
+		if i.anterior.proximo == nil {
+			i.lista.ultimo = i.anterior
+		}
 	}
 	i.actual = i.actual.proximo
 	i.lista.largo--
