@@ -282,3 +282,40 @@ func TestIteradorExternoBorrarUltimoElem(t *testing.T) {
 	require.Equal(t, 10, iter.Borrar())
 	require.Equal(t, 9, lista.VerUltimo())
 }
+
+func TestIteradorExternoBorrarElemMedio(t *testing.T) {
+	lista := TDALista.CrearListaEnlazada[int]()
+	for i := 0; i <= 10; i++ {
+		lista.InsertarUltimo(i)
+	}
+	for iter := lista.Iterador(); iter.HaySiguiente(); iter.Siguiente() {
+		if iter.VerActual() == 5 {
+			require.Equal(t, 5, iter.Borrar())
+		}
+	}
+	for iter2 := lista.Iterador(); iter2.HaySiguiente(); iter2.Siguiente() {
+		require.NotEqual(t, 5, iter2.VerActual())
+	}
+	require.Equal(t, 10, lista.Largo())
+}
+
+func TestIteradorExternoPostBorrarTodos(t *testing.T) {
+	lista := TDALista.CrearListaEnlazada[int]()
+	for i := 0; i <= 10; i++ {
+		lista.InsertarUltimo(i)
+	}
+	iter := lista.Iterador()
+	for j := 0; j <= 10; j++ {
+		require.Equal(t, j, iter.Borrar())
+	}
+	require.False(t, iter.HaySiguiente())
+	require.PanicsWithValue(t, "El iterador termino de iterar", func() { iter.VerActual() })
+	require.PanicsWithValue(t, "El iterador termino de iterar", func() { iter.Siguiente() })
+	require.PanicsWithValue(t, "El iterador termino de iterar", func() { iter.Borrar() })
+
+	require.True(t, lista.EstaVacia(), "La lista cuyos elementos fueron todos borrados actua como una vacia")
+	require.Equal(t, 0, lista.Largo())
+	require.PanicsWithValue(t, "La lista esta vacia", func() { lista.BorrarPrimero() })
+	require.PanicsWithValue(t, "La lista esta vacia", func() { lista.VerPrimero() })
+	require.PanicsWithValue(t, "La lista esta vacia", func() { lista.VerUltimo() })
+}

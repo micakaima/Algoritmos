@@ -111,14 +111,11 @@ func (i *iterListaEnlazada[T]) Insertar(elem T) {
 	nuevoNodo := crearNodo(elem)
 	if i.anterior == nil {
 		i.lista.primero = nuevoNodo
-		if i.lista.ultimo == nil {
-			i.lista.ultimo = nuevoNodo
-		}
 	} else {
 		i.anterior.proximo = nuevoNodo
-		if i.actual == nil {
-			i.lista.ultimo = nuevoNodo
-		}
+	}
+	if i.actual == nil {
+		i.lista.ultimo = nuevoNodo
 	}
 	nuevoNodo.proximo = i.actual
 	i.actual = nuevoNodo
@@ -129,17 +126,14 @@ func (i *iterListaEnlazada[T]) Borrar() T {
 	validarIteradorFinalizado(i)
 	datoEliminado := i.actual.dato
 	if i.anterior == nil {
-		i.lista.primero = i.lista.primero.proximo
-		if i.lista.primero == nil {
-			i.lista.ultimo = nil
-		}
+		i.lista.primero = i.actual.proximo
 	} else {
 		i.anterior.proximo = i.actual.proximo
-		if i.anterior.proximo == nil {
-			i.lista.ultimo = i.anterior
-		}
 	}
 	i.actual = i.actual.proximo
+	if i.actual == nil {
+		i.lista.ultimo = i.anterior
+	}
 	i.lista.largo--
 	return datoEliminado
 }
