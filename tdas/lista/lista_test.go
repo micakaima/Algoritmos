@@ -202,3 +202,83 @@ func TestIteradorExterno(t *testing.T) {
 		j++
 	}
 }
+
+func TestIteradorExternoEnListaVacia(t *testing.T) {
+	lista := TDALista.CrearListaEnlazada[int]()
+	iter := lista.Iterador()
+	require.PanicsWithValue(t, "El iterador termino de iterar", func() { iter.VerActual() })
+	require.PanicsWithValue(t, "El iterador termino de iterar", func() { iter.Borrar() })
+	require.PanicsWithValue(t, "El iterador termino de iterar", func() { iter.Siguiente() })
+	require.False(t, iter.HaySiguiente())
+}
+
+func TestIteradorExternoInsertarEnListaVacia(t *testing.T) {
+	lista := TDALista.CrearListaEnlazada[int]()
+	iter := lista.Iterador()
+	iter.Insertar(1)
+	require.Equal(t, 1, lista.VerPrimero())
+	require.Equal(t, 1, lista.VerUltimo())
+	require.Equal(t, 1, lista.Largo())
+}
+
+func TestIteradorExternoInsertarPrimeraPos(t *testing.T) {
+	lista := TDALista.CrearListaEnlazada[int]()
+	iter := lista.Iterador()
+	for i := 0; i <= 10; i++ {
+		iter.Insertar(i)
+	}
+	require.Equal(t, 10, lista.VerPrimero())
+	require.Equal(t, 0, lista.VerUltimo())
+	require.Equal(t, 11, lista.Largo())
+}
+
+func TestIteradorExternoInsertarUltimaPos(t *testing.T) {
+	lista := TDALista.CrearListaEnlazada[int]()
+	iter := lista.Iterador()
+	for i := 0; i <= 10; i++ {
+		iter.Insertar(i)
+		iter.Siguiente()
+	}
+	require.Equal(t, 0, lista.VerPrimero())
+	require.Equal(t, 10, lista.VerUltimo())
+	require.Equal(t, 11, lista.Largo())
+}
+
+func TestIteradorExternoInsertarPosMedio(t *testing.T) {
+	lista := TDALista.CrearListaEnlazada[int]()
+	iter := lista.Iterador()
+	for i := 0; i <= 10; i++ {
+		iter.Insertar(i)
+		iter.Siguiente()
+	}
+	numRequerido := 0
+	for iter2 := lista.Iterador(); iter2.HaySiguiente(); iter2.Siguiente() {
+		require.Equal(t, numRequerido, iter2.VerActual())
+		numRequerido++
+	}
+	require.Equal(t, 11, lista.Largo())
+}
+
+func TestIteradorExternoBorrarPrimerElem(t *testing.T) {
+	lista := TDALista.CrearListaEnlazada[int]()
+	for i := 0; i <= 10; i++ {
+		lista.InsertarUltimo(i)
+	}
+	iter := lista.Iterador()
+	require.Equal(t, 0, iter.Borrar())
+	require.Equal(t, 1, iter.VerActual())
+	require.Equal(t, 1, lista.VerPrimero())
+}
+
+func TestIteradorExternoBorrarUltimoElem(t *testing.T) {
+	lista := TDALista.CrearListaEnlazada[int]()
+	for i := 0; i <= 10; i++ {
+		lista.InsertarUltimo(i)
+	}
+	iter := lista.Iterador()
+	for j := 0; j < 10; j++ {
+		iter.Siguiente()
+	}
+	require.Equal(t, 10, iter.Borrar())
+	require.Equal(t, 9, lista.VerUltimo())
+}
