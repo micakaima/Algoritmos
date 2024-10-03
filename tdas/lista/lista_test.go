@@ -224,17 +224,26 @@ func TestIteradorExternoInsertarEnListaVacia(t *testing.T) {
 func TestIteradorExternoInsertarPrimeraPos(t *testing.T) {
 	lista := TDALista.CrearListaEnlazada[int]()
 	iter := lista.Iterador()
+	// Comenzando con una lista vacia, cada elemento insertado se agregaran siempre
+	// del lado izquierdo, quedando al principio de la lista.
 	for i := 0; i <= 10; i++ {
 		iter.Insertar(i)
 	}
 	require.Equal(t, 10, lista.VerPrimero())
 	require.Equal(t, 0, lista.VerUltimo())
 	require.Equal(t, 11, lista.Largo())
+	valor := 10
+	for iter2 := lista.Iterador(); iter2.HaySiguiente(); iter2.Siguiente() {
+		require.Equal(t, valor, lista.BorrarPrimero())
+		valor--
+	}
 }
 
 func TestIteradorExternoInsertarUltimaPos(t *testing.T) {
 	lista := TDALista.CrearListaEnlazada[int]()
 	iter := lista.Iterador()
+	// Comenzando con una lista vacia, cada elemento insertado luego de iterar al
+	// siguiente se agregaran siempre al final de la lista, del lado derecho.
 	for i := 0; i <= 10; i++ {
 		iter.Insertar(i)
 		iter.Siguiente()
@@ -242,6 +251,11 @@ func TestIteradorExternoInsertarUltimaPos(t *testing.T) {
 	require.Equal(t, 0, lista.VerPrimero())
 	require.Equal(t, 10, lista.VerUltimo())
 	require.Equal(t, 11, lista.Largo())
+	valor := 0
+	for iter2 := lista.Iterador(); iter2.HaySiguiente(); iter2.Siguiente() {
+		require.Equal(t, valor, lista.BorrarPrimero())
+		valor++
+	}
 }
 
 func TestIteradorExternoInsertarPosMedio(t *testing.T) {
