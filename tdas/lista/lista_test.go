@@ -221,7 +221,7 @@ func TestIteradorExternoInsertarEnListaVacia(t *testing.T) {
 	require.Equal(t, 1, lista.Largo())
 }
 
-func TestIteradorExternoInsertarPrimeraPos(t *testing.T) {
+func TestIteradorExternoInsertarPrimeraPosEnListaVacia(t *testing.T) {
 	lista := TDALista.CrearListaEnlazada[int]()
 	iter := lista.Iterador()
 	// Comenzando con una lista vacia, cada elemento insertado se agregaran siempre
@@ -229,6 +229,7 @@ func TestIteradorExternoInsertarPrimeraPos(t *testing.T) {
 	for i := 0; i <= 10; i++ {
 		iter.Insertar(i)
 	}
+	require.Equal(t, 10, iter.VerActual())
 	require.Equal(t, 10, lista.VerPrimero())
 	require.Equal(t, 0, lista.VerUltimo())
 	require.Equal(t, 11, lista.Largo())
@@ -239,7 +240,20 @@ func TestIteradorExternoInsertarPrimeraPos(t *testing.T) {
 	}
 }
 
-func TestIteradorExternoInsertarUltimaPos(t *testing.T) {
+func TestIteradorExternoInsertarPrimeraPosEnListaNOVacia(t *testing.T) {
+	lista := TDALista.CrearListaEnlazada[int]()
+	for i := 0; i <= 10; i++ {
+		lista.InsertarUltimo(i)
+	}
+	iter := lista.Iterador()
+	iter.Insertar(-1)
+	require.Equal(t, -1, iter.VerActual())
+	require.Equal(t, -1, lista.VerPrimero())
+	require.Equal(t, 10, lista.VerUltimo())
+	require.Equal(t, 12, lista.Largo())
+}
+
+func TestIteradorExternoInsertarUltimaPosEnListaVacia(t *testing.T) {
 	lista := TDALista.CrearListaEnlazada[int]()
 	iter := lista.Iterador()
 	// Comenzando con una lista vacia, cada elemento insertado luego de iterar al
@@ -258,19 +272,38 @@ func TestIteradorExternoInsertarUltimaPos(t *testing.T) {
 	}
 }
 
-func TestIteradorExternoInsertarPosMedio(t *testing.T) {
+func TestIteradorExternoInsertarUltimaPosEnListaNOVacia(t *testing.T) {
 	lista := TDALista.CrearListaEnlazada[int]()
-	iter := lista.Iterador()
 	for i := 0; i <= 10; i++ {
-		iter.Insertar(i)
+		lista.InsertarUltimo(i)
+	}
+	iter := lista.Iterador()
+	for iter.HaySiguiente() {
 		iter.Siguiente()
 	}
-	numRequerido := 0
-	for iter2 := lista.Iterador(); iter2.HaySiguiente(); iter2.Siguiente() {
-		require.Equal(t, numRequerido, iter2.VerActual())
-		numRequerido++
+	iter.Insertar(11)
+	require.Equal(t, 0, lista.VerPrimero())
+	require.Equal(t, 11, lista.VerUltimo())
+	require.Equal(t, 12, lista.Largo())
+}
+
+func TestIteradorExternoInsertarPosMedio(t *testing.T) {
+	lista := TDALista.CrearListaEnlazada[int]()
+	for i := 0; i <= 10; i++ {
+		lista.InsertarUltimo(i)
 	}
-	require.Equal(t, 11, lista.Largo())
+	for iter := lista.Iterador(); iter.HaySiguiente(); iter.Siguiente() {
+		if iter.VerActual() == 5 {
+			iter.Insertar(0)
+			iter.Siguiente()
+		}
+	}
+	numRequeridos := []int{0, 1, 2, 3, 4, 0, 5, 6, 7, 8, 9, 10}
+	j := 0
+	for iter2 := lista.Iterador(); iter2.HaySiguiente(); iter2.Siguiente() {
+		require.Equal(t, numRequeridos[j], iter2.VerActual())
+		j++
+	}
 }
 
 func TestIteradorExternoBorrarPrimerElem(t *testing.T) {
