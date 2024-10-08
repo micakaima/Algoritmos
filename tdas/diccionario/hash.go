@@ -24,10 +24,10 @@ type celdaHash[K comparable, V any] struct {
 }
 
 type hashCerrado[K comparable, V any] struct {
-	tabla    []celdaHash[K, V]
-	cantidad int
-	tam      int
-	borrados int
+	tabla     []celdaHash[K, V]
+	tam       int
+	guardados int
+	borrados  int
 }
 
 type iterHashCerrado[K comparable, V any] struct {
@@ -41,14 +41,14 @@ func CrearHash[K comparable, V any]() Diccionario[K, V] {
 }
 
 func (hash *hashCerrado[K, V]) Guardar(clave K, dato V) {
-	if float64((hash.cantidad+hash.borrados))/float64(hash.tam) >= FACTOR_REDIMENSION_AGRANDAR {
+	if float64(hash.guardados+hash.borrados)/float64(hash.tam) >= FACTOR_REDIMENSION_AGRANDAR {
 		redimensionarTabla(hash, hash.tam*PROPORCION_REDIMENSION)
 	}
 
 	pos := buscarPos(hash, clave)
 	if hash.tabla[pos].estado == VACIO {
 		hash.tabla[pos] = celdaHash[K, V]{clave, dato, OCUPADO}
-		hash.cantidad++
+		hash.guardados++
 	} else {
 		hash.tabla[pos].dato = dato
 	}
@@ -68,17 +68,17 @@ func (hash *hashCerrado[K, V]) Borrar(clave K) V {
 	pos := buscarPos(hash, clave)
 	datoBorrado := hash.tabla[pos].dato
 	hash.tabla[pos].estado = BORRADO
-	hash.cantidad--
+	hash.guardados--
 	hash.borrados++
 
-	if float64((hash.cantidad+hash.borrados))/float64(hash.tam) <= FACTOR_REDIMENSION_ACHICAR && hash.tam > TAM_INICIAL {
+	if float64(hash.guardados+hash.borrados)/float64(hash.tam) <= FACTOR_REDIMENSION_ACHICAR && hash.tam > TAM_INICIAL {
 		redimensionarTabla(hash, hash.tam/PROPORCION_REDIMENSION)
 	}
 	return datoBorrado
 }
 
 func (hash *hashCerrado[K, V]) Cantidad() int {
-	return hash.cantidad
+	return hash.guardados
 }
 
 func (hash *hashCerrado[K, V]) Iterar(visitar func(clave K, dato V) bool) {
@@ -92,27 +92,27 @@ func (hash *hashCerrado[K, V]) Iterar(visitar func(clave K, dato V) bool) {
 }
 
 func (hash *hashCerrado[K, V]) Iterador() IterDiccionario[K, V] {
-	return &iterHashCerrado[K, V]{0, hash}
+	posActual := 0
+	for posActual < hash.tam && hash.tabla[posActual].estado != OCUPADO {
+		posActual++
+	}
+	return &iterHashCerrado[K, V]{posActual, hash}
 }
 
 func (iter *iterHashCerrado[K, V]) HaySiguiente() bool {
-	return iter.posActual != iter.hash.tam
+	return iter.posActual < iter.hash.tam
 }
 
 func (iter *iterHashCerrado[K, V]) VerActual() (K, V) {
 	validarIteradorFinalizado(iter)
-	for iter.hash.tabla[iter.posActual].estado != OCUPADO {
-		iter.posActual++
-	}
-	clave := iter.hash.tabla[iter.posActual].clave
-	dato := iter.hash.tabla[iter.posActual].dato
-	return clave, dato
+	celda := iter.hash.tabla[iter.posActual]
+	return celda.clave, celda.dato
 }
 
 func (iter *iterHashCerrado[K, V]) Siguiente() {
 	validarIteradorFinalizado(iter)
 	iter.posActual++
-	for iter.hash.tabla[iter.posActual].estado != OCUPADO {
+	for iter.HaySiguiente() && iter.hash.tabla[iter.posActual].estado != OCUPADO {
 		iter.posActual++
 	}
 }
@@ -130,7 +130,7 @@ func fnvHashing[K comparable](clave K) uint32 {
 // Me da la pos donde debo actualizar [o] la primera posicion VACIA que encuentre
 func buscarPos[K comparable, V any](hash *hashCerrado[K, V], clave K) int {
 	pos := fnvHashing(clave) % uint32(hash.tam)
-	for hash.tabla[pos].estado != VACIO && !(hash.tabla[pos].estado == OCUPADO && hash.tabla[pos].clave == clave) {
+	for hash.tabla[pos].estado != VACIO && !(hash.tabla[pos].clave == clave && hash.tabla[pos].estado != BORRADO) {
 		pos++
 		if int(pos) >= hash.tam {
 			pos = 0
@@ -141,15 +141,10 @@ func buscarPos[K comparable, V any](hash *hashCerrado[K, V], clave K) int {
 
 func redimensionarTabla[K comparable, V any](hash *hashCerrado[K, V], nuevaCapacidad int) {
 	nuevaTabla := make([]celdaHash[K, V], nuevaCapacidad)
+	hashAux := &hashCerrado[K, V]{tabla: nuevaTabla, tam: nuevaCapacidad}
 	for _, celda := range hash.tabla {
 		if celda.estado == OCUPADO {
-			nuevaPos := fnvHashing(celda.clave) % uint32(nuevaCapacidad)
-			for nuevaTabla[nuevaPos].estado == OCUPADO {
-				nuevaPos++
-				if nuevaPos >= uint32(nuevaCapacidad) {
-					nuevaPos = 0
-				}
-			}
+			nuevaPos := buscarPos(hashAux, celda.clave)
 			nuevaTabla[nuevaPos] = celda
 		}
 	}
