@@ -35,9 +35,12 @@ type iterHashCerrado[K comparable, V any] struct {
 	hash      *hashCerrado[K, V]
 }
 
+func crearTabla[K comparable, V any](tamanio int) []celdaHash[K, V] {
+	return make([]celdaHash[K, V], tamanio)
+}
+
 func CrearHash[K comparable, V any]() Diccionario[K, V] {
-	tabla := make([]celdaHash[K, V], TAM_INICIAL)
-	return &hashCerrado[K, V]{tabla: tabla, tam: TAM_INICIAL}
+	return &hashCerrado[K, V]{tabla: crearTabla[K, V](TAM_INICIAL), tam: TAM_INICIAL}
 }
 
 func (hash *hashCerrado[K, V]) Guardar(clave K, dato V) {
@@ -59,13 +62,19 @@ func (hash *hashCerrado[K, V]) Pertenece(clave K) bool {
 }
 
 func (hash *hashCerrado[K, V]) Obtener(clave K) V {
-	validarPertenencia(hash, clave)
-	return hash.tabla[buscarPos(hash, clave)].dato
+	posicion := buscarPos(hash, clave)
+	if hash.tabla[posicion].estado == OCUPADO {
+		return hash.tabla[posicion].dato
+	} else {
+		panic("La clave no pertenece al diccionario")
+	}
 }
 
 func (hash *hashCerrado[K, V]) Borrar(clave K) V {
-	validarPertenencia(hash, clave)
 	pos := buscarPos(hash, clave)
+	if hash.tabla[pos].estado != OCUPADO {
+		panic("La clave no pertenece al diccionario")
+	}
 	datoBorrado := hash.tabla[pos].dato
 	hash.tabla[pos].estado = BORRADO
 	hash.guardados--
@@ -121,6 +130,7 @@ func convertirABytes[K comparable](clave K) []byte {
 	return []byte(fmt.Sprintf("%v", clave))
 }
 
+// Funcion de Hashing importada desde el paquete "fnv" de Go
 func fnvHashing[K comparable](clave K) uint32 {
 	h := fnv.New32()
 	h.Write(convertirABytes(clave))
@@ -140,7 +150,7 @@ func buscarPos[K comparable, V any](hash *hashCerrado[K, V], clave K) int {
 }
 
 func redimensionarTabla[K comparable, V any](hash *hashCerrado[K, V], nuevaCapacidad int) {
-	nuevaTabla := make([]celdaHash[K, V], nuevaCapacidad)
+	nuevaTabla := crearTabla[K, V](nuevaCapacidad)
 	hashAux := &hashCerrado[K, V]{tabla: nuevaTabla, tam: nuevaCapacidad}
 	for _, celda := range hash.tabla {
 		if celda.estado == OCUPADO {
@@ -150,12 +160,6 @@ func redimensionarTabla[K comparable, V any](hash *hashCerrado[K, V], nuevaCapac
 	}
 	hash.tabla = nuevaTabla
 	hash.tam = nuevaCapacidad
-}
-
-func validarPertenencia[K comparable, V any](hash *hashCerrado[K, V], clave K) {
-	if !hash.Pertenece(clave) {
-		panic("La clave no pertenece al diccionario")
-	}
 }
 
 func validarIteradorFinalizado[K comparable, V any](iter *iterHashCerrado[K, V]) {
