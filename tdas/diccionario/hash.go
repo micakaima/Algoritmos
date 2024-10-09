@@ -18,9 +18,9 @@ const (
 )
 
 type celdaHash[K comparable, V any] struct {
-	clave K
-	dato  V
-	estado
+	clave  K
+	dato   V
+	estado estado
 }
 
 type hashCerrado[K comparable, V any] struct {
