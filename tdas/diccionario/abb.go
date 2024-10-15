@@ -28,19 +28,19 @@ func (ab *abb[K, V]) Guardar(clave K, dato V) {
 	if ab.raiz == nil {
 		ab.raiz = nuevaHoja
 	} else {
-		puntero := buscarPuntero(ab, clave)
+		puntero := buscarPuntero(ab.raiz, ab.cmp, clave)
 		*puntero = nuevaHoja
 	}
 	ab.cantidad++
 }
 
 func (ab *abb[K, V]) Pertenece(clave K) bool {
-	puntero := buscarPuntero(ab, clave)
+	puntero := buscarPuntero(ab.raiz, ab.cmp, clave)
 	return *puntero != nil
 }
 
 func (ab *abb[K, V]) Obtener(clave K) V {
-	puntero := buscarPuntero(ab, clave)
+	puntero := buscarPuntero(ab.raiz, ab.cmp, clave)
 	if *puntero == nil {
 		panic("La clave no pertenece al diccionario")
 	}
@@ -48,7 +48,7 @@ func (ab *abb[K, V]) Obtener(clave K) V {
 }
 
 func (ab *abb[K, V]) Borrar(clave K) V {
-	puntero := buscarPuntero(ab, clave)
+	puntero := buscarPuntero(ab.raiz, ab.cmp, clave)
 	if *puntero == nil {
 		panic("La clave no pertenece al diccionario")
 	}
@@ -60,7 +60,7 @@ func (ab *abb[K, V]) Borrar(clave K) V {
 	} else if (*puntero).derecho == nil {
 		*puntero = (*puntero).izquierdo
 	} else {
-		claveMin, valorMin := hallarMinimo(ab.raiz)
+		claveMin, valorMin := hallarMaximoRamaIzquierda(ab.raiz)
 		(*puntero).clave = claveMin
 		(*puntero).dato = valorMin
 		ab.Borrar(claveMin)
@@ -107,29 +107,29 @@ func (ab *abb[K, V]) IteradorRango(desde *K, hasta *K) IterDiccionario[K, V] {
 
 }
 
-func hallarMinimo[K comparable, V any](raiz *nodoAbb[K, V]) (K, V) {
+func hallarMaximoRamaIzquierda[K comparable, V any](raiz *nodoAbb[K, V]) (K, V) {
 	if raiz.izquierdo == nil && raiz.derecho == nil {
 		return raiz.clave, raiz.dato
 	}
 	if raiz.izquierdo == nil {
-		return hallarMinimo(raiz.derecho)
+		return hallarMaximoRamaIzquierda(raiz.derecho)
 	}
-	return hallarMinimo(raiz.izquierdo)
+	return hallarMaximoRamaIzquierda(raiz.izquierdo)
 }
 
-func buscarPuntero[K comparable, V any](ab *abb[K, V], clave K) **nodoAbb[K, V] {
-	if ab.cmp(clave, ab.raiz.clave) < 0 {
-		if ab.raiz.izquierdo != nil {
-			return buscarPuntero(&abb[K, V]{ab.raiz.izquierdo, ab.cantidad, ab.cmp}, clave)
+func buscarPuntero[K comparable, V any](raiz *nodoAbb[K, V], cmp func(K, K) int, clave K) **nodoAbb[K, V] {
+	if cmp(clave, raiz.clave) < 0 {
+		if raiz.izquierdo != nil {
+			return buscarPuntero(raiz.izquierdo, cmp, clave)
 		} else {
-			return &ab.raiz.izquierdo
+			return &raiz.izquierdo
 		}
-	} else if ab.cmp(clave, ab.raiz.clave) > 0 {
-		if ab.raiz.derecho != nil {
-			return buscarPuntero(&abb[K, V]{ab.raiz.derecho, ab.cantidad, ab.cmp}, clave)
+	} else if cmp(clave, raiz.clave) > 0 {
+		if raiz.derecho != nil {
+			return buscarPuntero(raiz.derecho, cmp, clave)
 		} else {
-			return &ab.raiz.derecho
+			return &raiz.derecho
 		}
 	}
-	return &ab.raiz
+	return &raiz
 }
