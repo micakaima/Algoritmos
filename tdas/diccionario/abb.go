@@ -1,6 +1,8 @@
 package diccionario
 
-import TDAPila "tdas/pila"
+import (
+	TDAPila "tdas/pila"
+)
 
 type nodoAbb[K comparable, V any] struct {
 	izquierdo *nodoAbb[K, V]
@@ -16,7 +18,14 @@ type abb[K comparable, V any] struct {
 }
 
 type iterAbb[K comparable, V any] struct {
-	pila TDAPila.Pila[*nodoAbb[K, V]]
+	arbol *abb[K, V]
+	pila  TDAPila.Pila[*nodoAbb[K, V]]
+	desde *K
+	hasta *K
+}
+
+func crearNodo[K comparable, V any](clave K, dato V) *nodoAbb[K, V] {
+	return &nodoAbb[K, V]{nil, nil, clave, dato}
 }
 
 func CrearABB[K comparable, V any](funcion_cmp func(K, K) int) DiccionarioOrdenado[K, V] {
@@ -24,12 +33,16 @@ func CrearABB[K comparable, V any](funcion_cmp func(K, K) int) DiccionarioOrdena
 }
 
 func (ab *abb[K, V]) Guardar(clave K, dato V) {
-	nuevaHoja := &nodoAbb[K, V]{nil, nil, clave, dato}
 	if ab.raiz == nil {
-		ab.raiz = nuevaHoja
+		ab.raiz = crearNodo(clave, dato)
 	} else {
 		puntero := buscarPuntero(ab.raiz, ab.cmp, clave)
-		*puntero = nuevaHoja
+		if *puntero == nil {
+			*puntero = crearNodo(clave, dato)
+		} else {
+			(*puntero).dato = dato
+		}
+
 	}
 	ab.cantidad++
 }
@@ -53,20 +66,24 @@ func (ab *abb[K, V]) Borrar(clave K) V {
 		panic("La clave no pertenece al diccionario")
 	}
 	datoBorrado := (*puntero).dato
-	if (*puntero).izquierdo == nil && (*puntero).derecho == nil {
-		*puntero = nil
-	} else if (*puntero).izquierdo == nil {
+	if (*puntero).izquierdo == nil {
 		*puntero = (*puntero).derecho
 	} else if (*puntero).derecho == nil {
 		*puntero = (*puntero).izquierdo
 	} else {
-		claveMin, valorMin := hallarMaximoRamaIzquierda(ab.raiz)
-		(*puntero).clave = claveMin
-		(*puntero).dato = valorMin
-		ab.Borrar(claveMin)
+		claveMax, valorMax := hallarReemplazo((*puntero).izquierdo)
+		(*puntero).clave = claveMax
+		(*puntero).dato = valorMax
+		return ab.Borrar(claveMax)
 	}
 	ab.cantidad--
 	return datoBorrado
+
+	/*
+		(*puntero).izquierdo == nil && (*puntero).derecho == nil {
+			*puntero = nil
+		} else if
+	*/
 }
 
 func (ab *abb[K, V]) Cantidad() int {
@@ -74,62 +91,119 @@ func (ab *abb[K, V]) Cantidad() int {
 }
 
 func (ab *abb[K, V]) Iterar(visitar func(clave K, dato V) bool) {
-	if ab.raiz == nil {
-		return
-	}
-
+	iterarRango(ab.raiz, nil, nil, ab.cmp, visitar)
 }
 
 func (ab *abb[K, V]) Iterador() IterDiccionario[K, V] {
-
+	pila := TDAPila.CrearPilaDinamica[*nodoAbb[K, V]]()
+	apilarClaves(ab.raiz, nil, nil, ab.cmp, pila)
+	return &iterAbb[K, V]{ab, pila, nil, nil}
 }
 
 func (iter *iterAbb[K, V]) HaySiguiente() bool {
-
+	return !iter.pila.EstaVacia()
 }
 
 func (iter *iterAbb[K, V]) VerActual() (K, V) {
-
+	return iter.pila.VerTope().clave, iter.pila.VerTope().dato
 }
 
 func (iter *iterAbb[K, V]) Siguiente() {
-
+	nodo := iter.pila.Desapilar()
+	if nodo.derecho != nil {
+		apilarClaves(nodo.derecho, iter.desde, iter.hasta, iter.arbol.cmp, iter.pila)
+	}
 }
 
 func (ab *abb[K, V]) IterarRango(desde *K, hasta *K, visitar func(clave K, dato V) bool) {
-	if ab.raiz == nil {
-		return
-	}
-
+	iterarRango(ab.raiz, desde, hasta, ab.cmp, visitar)
 }
 
 func (ab *abb[K, V]) IteradorRango(desde *K, hasta *K) IterDiccionario[K, V] {
-
+	pila := TDAPila.CrearPilaDinamica[*nodoAbb[K, V]]()
+	apilarClaves(ab.raiz, desde, hasta, ab.cmp, pila)
+	return &iterAbb[K, V]{ab, pila, desde, hasta}
 }
 
-func hallarMaximoRamaIzquierda[K comparable, V any](raiz *nodoAbb[K, V]) (K, V) {
-	if raiz.izquierdo == nil && raiz.derecho == nil {
-		return raiz.clave, raiz.dato
+func hallarReemplazo[K comparable, V any](nodo *nodoAbb[K, V]) (K, V) {
+	if nodo.izquierdo == nil && nodo.derecho == nil {
+		return nodo.clave, nodo.dato
 	}
-	if raiz.izquierdo == nil {
-		return hallarMaximoRamaIzquierda(raiz.derecho)
+	if nodo.derecho != nil {
+		return hallarReemplazo(nodo.derecho)
 	}
-	return hallarMaximoRamaIzquierda(raiz.izquierdo)
+	return hallarReemplazo(nodo.izquierdo)
+
+	/*
+		if raiz.izquierdo == nil && raiz.derecho == nil {
+			return raiz.clave, raiz.dato
+		}
+		if raiz.izquierdo == nil {
+			return hallarMaximoRamaIzquierda(raiz.derecho)
+		}
+		return hallarMaximoRamaIzquierda(raiz.izquierdo)
+	*/
 }
 
-func buscarPuntero[K comparable, V any](raiz *nodoAbb[K, V], cmp func(K, K) int, clave K) **nodoAbb[K, V] {
-	if cmp(clave, raiz.clave) < 0 {
-		if raiz.izquierdo != nil {
-			return buscarPuntero(raiz.izquierdo, cmp, clave)
+func buscarPuntero[K comparable, V any](nodo *nodoAbb[K, V], cmp func(K, K) int, clave K) **nodoAbb[K, V] {
+	if nodo == nil || cmp(nodo.clave, clave) == 0 {
+		return &nodo
+	}
+	if cmp(nodo.clave, clave) > 0 {
+		return buscarPuntero(nodo.izquierdo, cmp, clave)
+	} else {
+		return buscarPuntero(nodo.derecho, cmp, clave)
+	}
+	/*if nodo == nil || cmp(nodo.clave, clave) == 0 {
+		return &nodo
+	}
+	if cmp(nodo.clave, clave) > 0 {
+		if nodo.izquierdo != nil {
+			return buscarPuntero(nodo.izquierdo, cmp, clave)
 		} else {
-			return &raiz.izquierdo
+			return &nodo.izquierdo
 		}
-	} else if cmp(clave, raiz.clave) > 0 {
-		if raiz.derecho != nil {
-			return buscarPuntero(raiz.derecho, cmp, clave)
+	} else {
+		if nodo.derecho != nil {
+			return buscarPuntero(nodo.derecho, cmp, clave)
 		} else {
-			return &raiz.derecho
+			return &nodo.derecho
 		}
 	}
-	return &raiz
+	*/
+}
+
+func iterarRango[K comparable, V any](nodo *nodoAbb[K, V], desde *K, hasta *K, cmp func(K, K) int, visitar func(clave K, dato V) bool) bool {
+	if nodo == nil {
+		return true
+	}
+	if desde == nil || cmp(nodo.clave, *desde) > 0 {
+		if !iterarRango(nodo.izquierdo, desde, hasta, cmp, visitar) {
+			return false
+		}
+	}
+	if (desde == nil || cmp(nodo.clave, *desde) >= 0) && (hasta == nil || cmp(nodo.clave, *hasta) <= 0) {
+		if !visitar(nodo.clave, nodo.dato) {
+			return false
+		}
+	}
+	if hasta == nil || cmp(nodo.clave, *hasta) < 0 {
+		if !iterarRango(nodo.derecho, desde, hasta, cmp, visitar) {
+			return false
+		}
+	}
+	return true
+}
+
+func apilarClaves[K comparable, V any](nodo *nodoAbb[K, V], desde *K, hasta *K, cmp func(K, K) int, pila TDAPila.Pila[*nodoAbb[K, V]]) {
+	if nodo == nil {
+		return
+	}
+	if (desde == nil || cmp(nodo.clave, *desde) >= 0) && (hasta == nil || cmp(nodo.clave, *hasta) <= 0) {
+		pila.Apilar(nodo)
+	}
+	if desde == nil || cmp(nodo.clave, *desde) > 0 {
+		apilarClaves(nodo.izquierdo, desde, hasta, cmp, pila)
+	}
+
 }
