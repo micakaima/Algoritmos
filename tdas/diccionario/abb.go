@@ -35,16 +35,26 @@ func CrearABB[K comparable, V any](funcion_cmp func(K, K) int) DiccionarioOrdena
 func (ab *abb[K, V]) Guardar(clave K, dato V) {
 	if ab.raiz == nil {
 		ab.raiz = crearNodo(clave, dato)
+		ab.cantidad++
 	} else {
 		puntero := buscarPuntero(ab.raiz, ab.cmp, clave)
 		if *puntero == nil {
 			*puntero = crearNodo(clave, dato)
+			ab.cantidad++
 		} else {
 			(*puntero).dato = dato
 		}
 
 	}
-	ab.cantidad++
+	/*
+		    puntero := buscarPuntero(ab.raiz, ab.cmp, clave)
+			if *puntero == nil {
+				*puntero = crearNodo(clave, dato)
+				ab.cantidad++
+			} else {
+				(*puntero).dato = dato
+			}
+	*/
 }
 
 func (ab *abb[K, V]) Pertenece(clave K) bool {
